@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Blockchain Auth System</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      padding: 30px;
+      width: 360px;
+      max-width: 90%;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      cursor: pointer;
+      padding: 10px 20px;
+      border-bottom: 2px solid transparent;
+      transition: 0.3s;
+    }
+
+    .tab.active {
+      border-bottom: 2px solid #007bff;
+      font-weight: bold;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    input {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      padding: 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    #message {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>🔐 Blockchain Auth</h2>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('login')">Login</div>
+      <div class="tab" onclick="switchTab('register')">Register</div>
+      <div class="tab" onclick="switchTab('change')">Change Password</div>
+    </div>
+
+    <div id="login" class="section active">
+      <div class="input-group">
+        <input type="text" id="loginUser" placeholder="Username">
+        <input type="password" id="loginPass" placeholder="Password">
+        <button onclick="login()">Login</button>
+      </div>
+    </div>
+
+    <div id="register" class="section">
+      <div class="input-group">
+        <input type="text" id="registerUser" placeholder="New Username">
+        <input type="password" id="registerPass" placeholder="New Password">
+        <button onclick="register()">Register</button>
+      </div>
+    </div>
+
+    <div id="change" class="section">
+      <div class="input-group">
+        <input type="text" id="changeUser" placeholder="Username">
+        <input type="password" id="changePass" placeholder="New Password">
+        <button onclick="changePassword()">Change Password</button>
+      </div>
+    </div>
+
+    <div id="message"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script>
+    class Block {
+      constructor(index, timestamp, data, prevHash = '') {
+        this.index = index;
+        this.timestamp = timestamp;
+        this.data = data;
+        this.prevHash = prevHash;
+        this.hash = this.calculateHash();
+      }
+
+      calculateHash() {
+        const str = this.index + this.timestamp + JSON.stringify(this.data) + this.prevHash;
+        return CryptoJS.SHA256(str).toString();
+      }
+    }
+
+    class Blockchain {
+      constructor() {
+        this.chain = [this.createGenesisBlock()];
+      }
+
+      createGenesisBlock() {
+        return new Block(0, Date.now(), { user: "genesis", pass: "root" }, "0");
+      }
+
+      getLatestBlock() {
+        return this.chain[this.chain.length - 1];
+      }
+
+      addBlock(data) {
+        const newBlock = new Block(this.chain.length, Date.now(), data, this.getLatestBlock().hash);
+        this.chain.push(newBlock);
+      }
+
+      isUserValid(user, passHash) {
+        // Check latest match
+        for (let i = this.chain.length - 1; i >= 0; i--) {
+          if (this.chain[i].data.user === user && this.chain[i].data.pass === passHash) {
+            return true;
+          }
+        }
+        return false;
+      }
+    }
+
+    const blockchain = new Blockchain();
+
+    function hashPassword(password) {
+      return CryptoJS.SHA256(password).toString();
+    }
+
+    function showMessage(msg, color = '#333') {
+      const msgEl = document.getElementById("message");
+      msgEl.innerText = msg;
+      msgEl.style.color = color;
+    }
+
+    function login() {
+      const user = document.getElementById("loginUser").value.trim();
+      const pass = document.getElementById("loginPass").value.trim();
+      const hash = hashPassword(pass);
+
+      if (blockchain.isUserValid(user, hash)) {
+        showMessage("✅ Login successful!", "green");
+      } else {
+        showMessage("❌ Invalid credentials.", "red");
+      }
+    }
+
+    function register() {
+      const user = document.getElementById("registerUser").value.trim();
+      const pass = document.getElementById("registerPass").value.trim();
+      const hash = hashPassword(pass);
+
+      blockchain.addBlock({ user, pass: hash });
+      showMessage("✅ Registered successfully!", "green");
+    }
+
+    function changePassword() {
+      const user = document.getElementById("changeUser").value.trim();
+      const pass = document.getElementById("changePass").value.trim();
+      const hash = hashPassword(pass);
+
+      blockchain.addBlock({ user, pass: hash });
+      showMessage("🔄 Password updated!", "blue");
+    }
+
+    function switchTab(id) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      event.target.classList.add('active');
+      showMessage(""); // clear message on tab switch
+    }
+  </script>
+
+</body>
+</html>
