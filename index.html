@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Blockchain Authentication System</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #d1c4e9, #b2ebf2);
+      color: #2e3d49;
+      padding: 50px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #4527a0;
+      font-size: 2.5em;
+      margin-bottom: 30px;
+    }
+
+    input, button {
+      padding: 12px;
+      font-size: 1em;
+      margin: 10px;
+      border: none;
+      border-radius: 25px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    input {
+      width: 220px;
+      text-align: center;
+    }
+
+    button {
+      background-color: #7e57c2;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #9575cd;
+    }
+
+    #output {
+      margin-top: 30px;
+      font-size: 1em;
+      font-weight: 500;
+    }
+
+    footer {
+      margin-top: 60px;
+      color: #5e35b1;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Blockchain-Based Authentication System</h1>
+
+  <input type="text" id="username" placeholder="Enter your username" />
+  <br>
+  <button onclick="register()">Register</button>
+  <button onclick="login()">Login</button>
+
+  <div id="output"></div>
+
+  <footer>
+    This project demonstrates a simplified blockchain-style login system using JavaScript.
+  </footer>
+
+  <script>
+    const users = {}; // Stores username and simulated private key
+
+    function generatePrivateKey() {
+      const array = new Uint8Array(16);
+      crypto.getRandomValues(array);
+      return Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function register() {
+      const username = document.getElementById("username").value.trim();
+      if (!username) {
+        alert("Please enter a username.");
+        return;
+      }
+
+      if (users[username]) {
+        alert("User already registered. Please use the login option.");
+        return;
+      }
+
+      const privateKey = generatePrivateKey();
+      users[username] = privateKey;
+
+      document.getElementById("output").innerHTML = `
+        <p>User Registered: <strong>${username}</strong></p>
+        <p>Generated Private Key: <code>${privateKey}</code></p>
+      `;
+    }
+
+    function login() {
+      const username = document.getElementById("username").value.trim();
+      if (!users[username]) {
+        alert("User not found. Please register first.");
+        return;
+      }
+
+      const privateKey = users[username];
+      const message = "Login authentication at " + new Date().toISOString();
+      const signature = btoa(message + privateKey).slice(0, 64);
+
+      document.getElementById("output").innerHTML = `
+        <p>Login Successful</p>
+        <p>User: <strong>${username}</strong></p>
+        <p>Signed Message (Simulated Signature):<br><code>${signature}</code></p>
+      `;
+    }
+  </script>
+</body>
+</html>
